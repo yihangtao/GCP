@@ -63,50 +63,6 @@ V2X-Sim-det/
     ...
 ```
 
-### BEVFlow Dataset for LSTM-AE
-
-The LSTM-AE is trained on a scene-level `.npz` file that stores frame-wise BEV
-boxes for one fixed scene and one fixed ego vehicle. The default example used in
-this repository is:
-
-- `coperception/logs/scene_0_ego_1.npz`
-
-The raw export logic is implemented in
-`coperception/coperception/datasets/BEVFlowGeneration.py`.
-
-Conceptually, the BEVFlow dataset is constructed as follows:
-
-1. Choose a target scene and ego vehicle.
-2. Run the clean victim detector frame by frame on the V2X-Sim test split.
-3. For each frame, collect the ego-view BEV bounding boxes produced in that scene.
-4. Save the whole scene as one `.npz` file.
-
-The exported `.npz` file contains:
-
-- `bev_flows`: frame-wise BEV box arrays for the selected scene and ego vehicle
-- `frame_ids`: frame indices stored in the same order as `bev_flows`
-- `ego_id`: ego vehicle id used for export
-- `scene_id`: source scene id
-
-During LSTM-AE training, `train_lstm_ae.py` further converts this frame-level
-data into object trajectories by:
-
-1. Taking a sliding window of length `F` (`--seq_length`)
-2. Matching boxes between consecutive frames with Hungarian matching under IoU
-3. Keeping only consistently matched chains
-4. Converting each matched object chain into one training sequence
-
-So the `.npz` file is the frame-level export, and the actual LSTM-AE samples are
-generated on the fly inside `train_lstm_ae.py`.
-
-If you need to regenerate the default training file, save the exported result to:
-
-- `coperception/logs/scene_<scene_id>_ego_<ego_agent>.npz`
-
-For example, the default training input should be saved as:
-
-- `coperception/logs/scene_0_ego_1.npz`
-
 ### Model Checkpoints
 
 Download [pre-trained weights](https://drive.google.com/drive/folders/1dGEYIzc5ITFKR0TSZfXPYAIw2GBo4oBT?usp=share_link) and save them in `coperception/ckpt/`:
@@ -121,20 +77,6 @@ For the default GCP runtime, also download the pre-trained LSTM-AE checkpoint fr
 - Default runtime checkpoint path: `coperception/logs/model/best_model.pth`
 - Save the downloaded file as: `coperception/logs/model/best_model.pth`
 
-## Scope
-
-This repository keeps the code needed for the core GCP runtime and training path:
-
-- `coperception/tools/det/gcp.py`
-- `coperception/coperception/utils/bac_attack.py`
-- `coperception/coperception/models/det/LSTMAutoencoder.py`
-- `coperception/tools/det/train_lstm_ae.py`
-- `scripts/train_lstm_ae.sh`
-- `scripts/run_gcp.sh`
-
-Local analysis assets, temporary experiment scripts, rebuttal materials, figures,
-logs, and offline BH-analysis files are treated as non-essential local files and
-are excluded through `.gitignore`.
 
 ## Quick Start
 
@@ -144,6 +86,15 @@ Expected input:
 
 - A BEVFlow `.npz` file such as `coperception/logs/scene_0_ego_1.npz`
 - Default temporal window length: `F = 5`
+
+BEVFlow dataset generation:
+
+- The raw export logic is implemented in `coperception/coperception/datasets/BEVFlowGeneration.py`
+- One `.npz` file corresponds to one fixed `scene_id` and one fixed `ego_agent`
+- The exporter runs the clean victim detector frame by frame and stores the ego-view BEV boxes for the whole scene
+- The exported `.npz` contains `bev_flows`, `frame_ids`, `ego_id`, and `scene_id`
+- During training, `train_lstm_ae.py` converts this frame-level data into matched object trajectories with sliding windows and Hungarian + IoU matching
+- Save generated files as `coperception/logs/scene_<scene_id>_ego_<ego_agent>.npz`
 
 ```bash
 cd /path/to/GCP
