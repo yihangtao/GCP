@@ -1,0 +1,11 @@
+1. Upperbound
+
+CUDA_VISIBLE_DEVICES=0 python robosac.py --robosac upperbound --log
+
+2. Attacker ratio 0.2, PGD, random mode, input pert 0.5.
+
+CUDA_VISIBLE_DEVICES=0 python robosac.py --robosac robosac_mAP --adv_iter 15 --number_of_attackers 1 --adv_method pgd --log --eps 0.5
+
+3. Attacker ratio 0.2, PGD, random mode, input pert 0.5.
+
+CUDA_VISIBLE_DEVICES=0 python robosac.py --robosac robosac_mAP --adv_iter 15 --number_of_attackers 1 --adv_method cw-l2 --log --eps 0.5
